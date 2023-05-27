@@ -1,0 +1,39 @@
+// receiver
+#include <SPI.h>
+#include <LoRa.h>
+
+int key = 312;
+int iteration = 1;
+int hashed  = 1;
+void setup() {
+
+  pinMode(0, OUTPUT);
+  Serial.begin(9600);
+  while (!Serial);
+  //Wire.begin();
+  Serial.println("LoRa Receiver");
+
+  if (!LoRa.begin(868E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+  LoRa.receive();
+}
+
+void onReceive(int packetSize){
+  Serial.println("Received packet...");
+  while(LoRa.available()){
+    String receivedData = LoRa.readString();
+    int parsedData = receivedData.toInt();
+    float divisionResult = parsedData / key;
+    if ((int)divisionResult == iteration) {
+      iteration++;;
+      Serial.println("Transformer tripped");
+      digitalWrite(0,HIGH);
+    }
+  }
+}
+void loop(){
+  LoRa.onReceive(onReceive);
+  
+}
