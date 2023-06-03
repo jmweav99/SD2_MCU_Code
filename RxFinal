@@ -1,0 +1,58 @@
+
+#include <SPI.h>
+#include <LoRa.h>
+#include <FlashStorage.h>
+
+
+typedef struct {
+  char keys[10][8] ={
+                      "1192139",
+                      "9429319",
+                      "2229911",
+                      "1123311",
+                      "2010236",
+                      "1571234",
+                      "4451123",
+                      "9909123",
+                      "4123000",
+                      "8881122"};
+}keystorage;
+String RD;
+keystorage values;
+FlashStorage(flash_store,keystorage)
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+  Serial.print("writing data");
+  flash_store.write(values);
+  Serial.println("LoRa Receiver");
+
+  if (!LoRa.begin(915E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+}
+
+void loop() {
+  // try to parse packet
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    // received a packet
+    Serial.print("Received packet: ");
+
+    // read packet
+    while (LoRa.available()) {
+      RD = LoRa.readString();
+      Serial.println(RD);
+    }
+    for(int i = 0; i < 10; i++){
+        if(values.keys[i] == RD){
+          Serial.println("TRANSFORMER TRIPPED");
+          strcpy(values.keys[i], "1929291");
+          char * test = strcpy(test, values.keys[i]);
+          Serial.println(test);
+        }
+      }
+    Serial.print("\n");
+  }
+}
