@@ -1,0 +1,73 @@
+#include <FlashStorage.h>
+// sender
+#include <SPI.h>
+
+#include <LoRa.h>
+
+#define POWER_PIN 7
+#define SIGNAL_PIN A1
+
+int value;
+typedef struct {
+  boolean valid;
+  int keys[10][1];
+  int count;
+  
+}keystorage;
+ keystorage values;
+FlashStorage(flash_store,keystorage);
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+  pinMode(POWER_PIN, OUTPUT);
+  digitalWrite(POWER_PIN, LOW);
+  values = flash_store.read();
+  if(values.valid == false){
+    Serial.print("writing data");
+    values.keys[0][0] = 1192139;
+    values.keys[1][0] = 9429319;
+    values.keys[2][0] = 2229911;
+    values.keys[3][0] = 1123311;
+    values.keys[4][0] = 2010236;
+    values.keys[5][0] = 1571234;
+    values.keys[6][0] = 4451123;
+    values.keys[7][0] = 9909123;
+    values.keys[8][0] = 4123000;
+    values.keys[9][0] = 8881122;
+    values.valid = true;
+    flash_store.write(values);
+  }
+  else{
+    Serial.println("received data from flash: \n");
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 1; j++){
+        Serial.print(values.keys[i][j]);
+        
+      }
+      Serial.print("\n");
+    }
+  }
+  Serial.println("LoRa Sender");
+  if (!LoRa.begin(915E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+}
+
+void loop(){
+  digitalWrite(POWER_PIN, HIGH);  // turn the sensor ON
+  delay(100);                      // wait 10 milliseconds
+  value = analogRead(SIGNAL_PIN); // read the analog value from sensor
+  digitalWrite(POWER_PIN, LOW);   // turn the sensor OFF
+  Serial.println(value);
+  if( value > 100){
+    Serial.print("Sending packet...");
+    LoRa.beginPacket();
+    LoRa.print(values.keys[values.count][0]);
+    LoRa.endPacket();
+    values.keys[values.count][0] = 0;
+    values.count++;
+    flash_store.write(values);
+  }
+  delay(5000);
+}
