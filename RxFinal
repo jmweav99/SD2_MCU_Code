@@ -45,14 +45,12 @@ void loop() {
       RD = LoRa.readString();
       Serial.println(RD);
     }
-    for(int i = 0; i < 10; i++){
+  }
+  for(int i = 0; i < 10; i++){
         if(values.keys[i] == RD){
           Serial.println("TRANSFORMER TRIPPED");
           strcpy(values.keys[i], "1929291");
-          char * test = strcpy(test, values.keys[i]);
-          Serial.println(test);
+          flash_store.write(values);
         }
-      }
-    Serial.print("\n");
   }
 }
