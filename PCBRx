@@ -1,0 +1,120 @@
+#include <Wire.h>
+#include <hd44780.h>                       // main hd44780 header
+#include <hd44780ioClass/hd44780_I2Cexp.h> // i2c expander i/o class header
+#include <LoRa.h>
+hd44780_I2Cexp lcd; 
+const int LCD_COLS = 14;
+const int LCD_ROWS = 2;
+String RH,RT;
+typedef struct {
+  char keys[10][11] = {
+    "fW0GHHp36e",
+    "fdFusgnWBO",
+    "fhkPSDmJbE",
+    "fYMQlSGxLH",
+    "fJlcisdX8z",
+    "fqqiVtBQR6",
+    "fUmJ0617Vp",
+    "fEkgta1y4X",
+    "fDAgmHKGAR",
+    "fb592a35B2"
+  };
+}keystorage;
+keystorage values;
+
+
+void setup()
+{
+  Serial.begin(9600);
+  while(!Serial);
+  Serial.println("test");
+  pinMode(A0,OUTPUT);
+  pinMode(A1,OUTPUT);
+  pinMode(A2,OUTPUT);
+  LEDshow();
+  int status;
+  status = lcd.begin(LCD_COLS, LCD_ROWS);
+  if(status) // non zero status means it was unsuccesful
+  {
+    hd44780::fatalError(status);
+  }
+
+  lcd.print("TENSFLOW");
+  lcd.setCursor(0, 1);
+  lcd.print("Receiver");
+  delay(5000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Status:");
+  lcd.setCursor(0, 1);
+  if(!LoRa.begin(915E6)){
+    while(1);
+  }
+  lcd.print("Connected");
+  digitalWrite(A0,HIGH);
+}
+
+void loop() {
+  int packetSize = LoRa.parsePacket();
+  if(packetSize){
+    String RD = LoRa.readString();
+    Serial.println(RD);
+    if(RD[0] == 't'){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Temperature:");
+      lcd.setCursor(0, 1);
+      RD[0] = ' ';
+      lcd.print(RD);
+    }
+    if(RD[0] == 'h'){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Humidity:");
+      lcd.setCursor(0, 1);
+      RD[0] = ' ';
+      lcd.print(RD);
+    }
+    if(RD[0] == 'f'){
+      for(int i = 0; i < 10; i++){
+        if(values.keys[i] == RD){
+          digitalWrite(A0,LOW);
+          digitalWrite(A2,HIGH);
+          strcpy(values.keys[i], "l1a2g3g4g5" );
+        }
+      }
+      delay(2000);
+      digitalWrite(A0,HIGH);
+      digitalWrite(A2,LOW);
+    }
+  }
+}
+
+void LEDshow(){
+  delay(1000);
+  digitalWrite(A0, HIGH);
+  delay(1000);
+  digitalWrite(A1, HIGH);
+  delay(1000);
+  digitalWrite(A2, HIGH);
+  delay(1000);
+  digitalWrite(A0,LOW);
+  digitalWrite(A1,LOW);
+  digitalWrite(A2,LOW);
+  delay(1000);
+  digitalWrite(A0,HIGH);
+  digitalWrite(A1,HIGH);
+  digitalWrite(A2,HIGH);
+  delay(1000);
+  digitalWrite(A0,LOW);
+  digitalWrite(A1,LOW);
+  digitalWrite(A2,LOW);
+  delay(1000);
+  digitalWrite(A0,HIGH);
+  digitalWrite(A1,HIGH);
+  digitalWrite(A2,HIGH);
+  delay(1000);
+  digitalWrite(A0,LOW);
+  digitalWrite(A1,LOW);
+  digitalWrite(A2,LOW);
+}
