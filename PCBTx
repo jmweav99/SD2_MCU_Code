@@ -1,0 +1,82 @@
+
+#include <SensirionI2CSht4x.h>
+#include <Wire.h>
+#include <LoRa.h>
+#include <SPI.h>
+
+SensirionI2CSht4x sht4x;
+typedef struct {
+  boolean valid;
+  char keys[10][11] = {
+    "fW0GHHp36e",
+    "fdFusgnWBO",
+    "fhkPSDmJbE",
+    "fYMQlSGxLH",
+    "fJlcisdX8z",
+    "fqqiVtBQR6",
+    "fUmJ0617Vp",
+    "fEkgta1y4X",
+    "fDAgmHKGAR",
+    "fb592a35B2"
+  };
+}keystorage;
+keystorage values;
+int COUNT = 0;
+//const int echoPin = 
+//const int trigPin = 
+String temp;
+void setup() {
+  if (!LoRa.begin(915E6)) {
+    while(1);
+  }
+  Serial.begin(9600);
+  Wire.begin();
+  uint16_t error;
+  char errorMessage[256];
+  sht4x.begin(Wire);
+  uint32_t serialNumber;
+  error = sht4x.serialNumber(serialNumber);
+  if (error) {
+      errorToString(error, errorMessage, 256);
+  } else {}
+}
+
+void loop() {
+  while(analogRead(A6) < 100){
+    uint16_t error;
+    char errorMessage[256];
+    float temperature;
+    float humidity;
+    error = sht4x.measureHighPrecision(temperature, humidity);
+    if (error) {
+        //Serial.print("Error trying to execute measureHighPrecision(): ");
+        errorToString(error, errorMessage, 256);
+        Serial.println(errorMessage);
+    } else {
+        temp = 't' + String(temperature);
+        LoRa.beginPacket();
+        LoRa.print(temp);
+        LoRa.endPacket();
+        if(analogRead(A6) > 100){
+          break;
+        }
+        delay(5000);
+
+        temp = 'h' + String(humidity);
+        LoRa.beginPacket();
+        LoRa.print(temp);
+        LoRa.endPacket();
+        if(analogRead(A6) > 100){
+          break;
+        }
+        delay(5000);
+        
+    }
+  }
+  Serial.println(values.keys[COUNT]);
+  LoRa.beginPacket();
+  LoRa.print(String(values.keys[COUNT]));
+  LoRa.endPacket();
+  COUNT++;
+  delay(10000);
+}
